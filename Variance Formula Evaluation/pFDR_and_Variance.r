@@ -70,14 +70,14 @@ Integral_pFDR <- function(alpha, beta, m0, m1)
 
 return_limit <- function(alpha, beta, m0, m1)
 {
-#
-# this function computes the first term of the three terms
-# in the expression for the variance:
-#
-# For large values of m0 and m1 (in millions) and small alpha and bete
-# the ranges of integrations should de made shorter. 
-#
-#
+  #
+  # this function computes the first term of the three terms
+  # in the expression for the variance:
+  #
+  # For large values of m0 and m1 (in millions) and small alpha and bete
+  # the ranges of integrations should de made shorter. 
+  #
+  #
   length = 10000;
   
   x = seq(0, 1, len = length);
@@ -191,10 +191,10 @@ first_term <- function(alpha, beta, m0, m1)
 
 second_term <- function(alpha, beta, m0, m1)
 {
-#
-# this function computes the second term of the three terms
-# in the expression for the variance:
-#
+  #
+  # this function computes the second term of the three terms
+  # in the expression for the variance:
+  #
   oned_2_integrant <- function(x1, x2, alpha, beta, m0, m1) 
   {
     
@@ -286,18 +286,18 @@ second_term <- function(alpha, beta, m0, m1)
 
 third_term <- function(alpha, beta, m0, m1)
 {
-
-#
-# this function computes the third term of the three terms
-# in the expression for the variance. It is the square of
-# the pFDR. It is a one-demensional integral
-#
-# The script first determines the first value of the argument (x) for
-# which the integrand is larger than 10^(-7). Then it does the integration
-# for two ranges: up to the determined value and after that.
-#
-#
-
+  
+  #
+  # this function computes the third term of the three terms
+  # in the expression for the variance. It is the square of
+  # the pFDR. It is a one-demensional integral
+  #
+  # The script first determines the first value of the argument (x) for
+  # which the integrand is larger than 10^(-7). Then it does the integration
+  # for two ranges: up to the determined value and after that.
+  #
+  #
+  
   integrant <- function(s, alpha, beta, m0, m1) 
   {
     (s * alpha  + 1 - alpha)^(m0 - 1) *
@@ -357,10 +357,10 @@ third_term <- function(alpha, beta, m0, m1)
 
 pFDR_variance <- function(alpha, beta, m0, m1)
 {
-#
-# the variance is the made of the three terms
-#
-#
+  #
+  # the variance is the made of the three terms
+  #
+  #
   
   temp3 = third_term(alpha, beta, m0, m1);
   
