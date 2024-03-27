@@ -183,7 +183,7 @@ second_term_power <- function(alpha, beta, m0, m1, mid_step)
        low_point = upper_point;
     }
 
-    twod_2 = twod_2 * (m0 * alpha)^2  / (1 - (1 - alpha)^m0*(1 - beta)^m1);
+    twod_2 = twod_2 * m0 * (m0-1) * alpha^2 / (1 - (1 - alpha)^m0*(1 - beta)^m1);
 
     return (twod_2) 
 
