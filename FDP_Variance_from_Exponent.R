@@ -235,9 +235,9 @@ pFDR_Exponent_variance <- function(N_false, N_significant, N_sample)
 
    # print(c("Third part from Exponent ", (N_false / N_significant) ^2) );
 
-   # print("The FDP, SD(FDP), and var(FDP), from exponential approximation, are: ");
+   print("The FDP, SD(FDP), and var(FDP), from exponential approximation, are: ");
 
-   # print(c((N_false/N_significant), sqrt(temp), temp));
+   print(c((N_false/N_significant), sqrt(temp), temp));
    
    return(temp);
  

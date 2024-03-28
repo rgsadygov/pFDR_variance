@@ -196,10 +196,35 @@ second_term_power <- function(alpha, beta, m0, m1, mid_step)
 # this function computes the third term of the three terms
 # in the expression for the variance. It is the square of
 # the pFDR. It is a one-demensional integral
-#
+#third_term_power <- function(alpha, beta, m0, m1, mid_step)
 
-third_term_power <- function(alpha, beta, m0, m1, mid_step)
+
+get_mid_step <- function(alpha, beta, m0, m1){
+  mid_step = 1;
+  
+  N_crit = m0 + m1;
+  
+  while (mid_step == 1)
+  {
+    mid_step = critical_point_1d(alpha, beta, m0, m1, N_crit);
+    
+    # print(mid_step);
+    
+    N_crit = 10 * N_crit;
+  }
+  
+  if(mid_step > 10)
+  {
+    mid_step = mid_step - 10;
+  }
+  return (mid_step);
+}
+
+pFDR_IntegralApproach <- function(alpha, beta, m0, m1, mid_step= -Inf)
 {
+   if (mid_step == -Inf){
+     mid_step = get_mid_step(alpha, beta, m0, m1);
+   }
    integrant <- function(s, alpha, beta, m0, m1) 
     {
          (s * alpha  + 1 - alpha)^(m0 - 1) *
@@ -227,8 +252,9 @@ third_term_power <- function(alpha, beta, m0, m1, mid_step)
 #
 #  for the variance, the square is needed
 #
-   return (pFDR_theoretical^2)
+   return (pFDR_theoretical)
 }
+
 
 #
 # The function computes the FDP variance in Eq. (12) of the
@@ -242,23 +268,7 @@ third_term_power <- function(alpha, beta, m0, m1, mid_step)
 pFDR_Power_variance <- function(alpha, beta, m0, m1)
 {
 
-    mid_step = 1;
-
-    N_crit = m0 + m1;
-
-    while (mid_step == 1)
-    {
-        mid_step = critical_point_1d(alpha, beta, m0, m1, N_crit);
-
-	# print(mid_step);
-
-	N_crit = 10 * N_crit;
-    }
-
-   if(mid_step > 10)
-   {
-       mid_step = mid_step - 10;
-   }
+   mid_step = get_mid_step(alpha, beta, m0, m1);
 
    temp = first_term_power(alpha, beta, m0, m1, mid_step);
 
@@ -268,15 +278,15 @@ pFDR_Power_variance <- function(alpha, beta, m0, m1)
 
    # print(c("Second part from power ", second_term_power(alpha, beta, m0, m1, mid_step)) );
 
-   third_term = third_term_power(alpha, beta, m0, m1, mid_step);
+   third_term = pFDR_IntegralApproach(alpha, beta, m0, m1, mid_step);
 
-   temp = temp - third_term;
+   temp = temp - third_term^2;
 
    # print(c("Third part from power ", third_term ));
 
-   # print("The FDP, SD(FDP), and var(FDP), from exponential approximation, are: ");
+   print("The FDP, SD(FDP), and var(FDP), from exponential approximation, are: ");
 
-   # print(c(sqrt(third_term), sqrt(temp), temp));
+   print(c((third_term), sqrt(temp), temp));
    
    return (temp);
    

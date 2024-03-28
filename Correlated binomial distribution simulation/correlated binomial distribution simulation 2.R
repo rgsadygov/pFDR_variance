@@ -32,37 +32,11 @@
 #======================================================================
 
 
-#calculates the pFDR using the integration approach
-pFDR_IntegralApproach <- function(alpha, beta, m0, m1) {
-  #Calculates the pFDR function at a given value during integration
-  integrant <- function(s, alpha, beta, m0, m1) {
-    result = (s * alpha  + 1 - alpha)^(m0 - 1) * (s * beta + 1 - beta)^m1
-    return(result)
-  }
-  
-  #these are the ranges where the integrations are explicited calculated in
-  bounds <- c(0, 0.0001, 0.0005, 0.001, 0.01, 0.025, 0.05, 
-              0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 
-              0.95, 0.96, 0.97, 0.98, 0.985, 0.99, 0.995, 1)
-  pFDR_theoretical = 0 #value of the pFDR_theoretical
-  
-  for(i in 2:length(bounds)) { #calculate each range of integration sequential and combine
-    lower = bounds[i-1] #lower bound of integration
-    upper = bounds[i] #upper bound of integration
-    pFDR_theoretical = pFDR_theoretical + integrate(integrant, lower=lower, upper=upper, 
-                                                    alpha=alpha, beta=beta, m0=m0, m1=m1)$value
-  }
-  
-  normalization <- (m0 * alpha) / (1 - (1-alpha)^m0 * (1-beta)^m1)
-  pFDR_theoretical <-  pFDR_theoretical * normalization #apply normalization value   
-  return (pFDR_theoretical);
-}
-
 
 #======================================================================
+#========================FDP variance==================================
 #======================================================================
-#======================================================================
-# An function to compute the false discovery rate and the variance
+# An R script to compute the false discovery rate and the variance
 # of the false discovery proportions using
 # probabilistic properties, such as the type I (alpha) and
 # type II (1- beta) errors, and the numbers of null (m0)
@@ -84,22 +58,22 @@ N_grid    = 10;
 
 oned_integrant_power <- function(x1, x2, alpha, beta, m0, m1)
 {
-  temp = (x1 * x2 * alpha  + 1 - alpha)^(m0 - 1) *
-    (x1 * x2 * beta + 1 - beta)^m1
-  
-  return (temp);
+	 temp = (x1 * x2 * alpha  + 1 - alpha)^(m0 - 1) *
+         (x1 * x2 * beta + 1 - beta)^m1
+
+	 return (temp);
 }
 
 
 oned_2_integrant_power <- function(x1, x2, alpha, beta, m0, m1) 
 {
-  
-  temp = (x1 * x2 * alpha  + 1 - alpha)^(m0 - 2) *
-    (x1 * x2 * beta + 1 - beta)^m1;
-  
-  temp = temp * x1 * x2;
-  
-  return (temp);
+
+	 temp = (x1 * x2 * alpha  + 1 - alpha)^(m0 - 2) *
+         (x1 * x2 * beta + 1 - beta)^m1;
+
+	 temp = temp * x1 * x2;
+
+	 return (temp);
 }
 
 #
@@ -114,23 +88,23 @@ oned_2_integrant_power <- function(x1, x2, alpha, beta, m0, m1)
 #
 critical_point_1d <- function(alpha, beta, m0, m1, N_crit)
 {  
-  for(i in 1:N_crit)
-  {
-    delta_x = i / N_crit;
-    
-    temp = (delta_x* alpha  + 1 - alpha)^(m0 - 1) *
-      (delta_x * beta + 1 - beta)^m1
-    
-    if(temp > 10^(-7) )
+    for(i in 1:N_crit)
     {
-      break;
+       delta_x = i / N_crit;
+
+       temp = (delta_x* alpha  + 1 - alpha)^(m0 - 1) *
+         (delta_x * beta + 1 - beta)^m1
+
+       if(temp > 10^(-7) )
+       {
+              break;
+       }
     }
-  }
-  
-  mid_step = i / N_crit;
-  
-  return(mid_step)
-  
+
+   mid_step = i / N_crit;
+
+   return(mid_step)
+   
 }  
 
 
@@ -146,53 +120,53 @@ critical_point_1d <- function(alpha, beta, m0, m1, N_crit)
 #
 first_term_power <- function(alpha, beta, m0, m1, mid_step)
 {
-  
-  delta = (1. - mid_step)/N_grid;
-  
-  low_point = mid_step; 
-  
-  oned_integral <- function(x2, alpha, beta, m0, m1)
-  {
-    
-    res = integrate(oned_integrant_power, lower=0, upper= mid_step, x2 = x2, alpha=alpha, beta = beta, m0 = m0, m1 = m1)$value
-    
+
     delta = (1. - mid_step)/N_grid;
-    
+
+    low_point = mid_step; 
+
+    oned_integral <- function(x2, alpha, beta, m0, m1)
+    {
+
+	res = integrate(oned_integrant_power, lower=0, upper= mid_step, x2 = x2, alpha=alpha, beta = beta, m0 = m0, m1 = m1)$value
+
+        delta = (1. - mid_step)/N_grid;
+
+        low_point = mid_step; 
+
+        for(i in 1:N_grid)
+	{
+
+	   upper_point = mid_step + i * delta;
+
+	   res = res + integrate(oned_integrant_power, lower=low_point, upper= upper_point, x2 = x2, alpha=alpha, beta = beta, m0 = m0, m1 = m1)$value; 
+
+	   low_point = upper_point;
+	}
+
+        return (res)
+    }
+ 
+
+    delta = (1. - mid_step)/N_grid;
+
     low_point = mid_step; 
     
+    twod = integrate(Vectorize(oned_integral), alpha=alpha, beta=beta, m0=m0, m1 = m1, lower=0, upper=mid_step)$value
+
     for(i in 1:N_grid)
     {
-      
-      upper_point = mid_step + i * delta;
-      
-      res = res + integrate(oned_integrant_power, lower=low_point, upper= upper_point, x2 = x2, alpha=alpha, beta = beta, m0 = m0, m1 = m1)$value; 
-      
-      low_point = upper_point;
+        upper_point = mid_step + i * delta;
+	
+        twod = twod + integrate(Vectorize(oned_integral), alpha=alpha, beta=beta, m0=m0, m1=m1, lower=low_point, upper=upper_point)$value
+
+	low_point = upper_point;
     }
+
+    twod = twod * m0 * alpha  / (1 - (1 - alpha)^m0*(1 - beta)^m1);
+
+    return (twod) 
     
-    return (res)
-  }
-  
-  
-  delta = (1. - mid_step)/N_grid;
-  
-  low_point = mid_step; 
-  
-  twod = integrate(Vectorize(oned_integral), alpha=alpha, beta=beta, m0=m0, m1 = m1, lower=0, upper=mid_step)$value
-  
-  for(i in 1:N_grid)
-  {
-    upper_point = mid_step + i * delta;
-    
-    twod = twod + integrate(Vectorize(oned_integral), alpha=alpha, beta=beta, m0=m0, m1=m1, lower=low_point, upper=upper_point)$value
-    
-    low_point = upper_point;
-  }
-  
-  twod = twod * m0 * alpha  / (1 - (1 - alpha)^m0*(1 - beta)^m1);
-  
-  return (twod) 
-  
 }
 
 #
@@ -208,47 +182,47 @@ first_term_power <- function(alpha, beta, m0, m1, mid_step)
 
 second_term_power <- function(alpha, beta, m0, m1, mid_step)
 {
-  
-  delta = (1. - mid_step) / N_grid;
-  
-  low_point = mid_step; 
-  
-  oned_2_integral_power <- function(x2, alpha, beta, m0, m1)
-  {
-    res = integrate(oned_2_integrant_power, lower=0, upper= mid_step, x2 = x2, alpha=alpha, beta=beta, m0=m0, m1=m1)$value
-    
+
+    delta = (1. - mid_step) / N_grid;
+
     low_point = mid_step; 
-    
+
+    oned_2_integral_power <- function(x2, alpha, beta, m0, m1)
+    {
+        res = integrate(oned_2_integrant_power, lower=0, upper= mid_step, x2 = x2, alpha=alpha, beta=beta, m0=m0, m1=m1)$value
+
+	low_point = mid_step; 
+
+        for(i in 1:N_grid)
+        {
+           upper_point = mid_step + i * delta;
+	
+           res = res + integrate(oned_2_integrant_power, lower=low_point, upper= upper_point, x2 = x2, alpha=alpha, beta=beta, m0=m0, m1=m1)$value
+
+	   low_point = upper_point;
+        }
+
+
+        return (res)
+    }
+
+    twod_2 = integrate(Vectorize(oned_2_integral_power), alpha=alpha, beta=beta, m0=m0, m1=m1, lower=0, upper=mid_step)$value
+
+    low_point = mid_step; 
+
     for(i in 1:N_grid)
     {
-      upper_point = mid_step + i * delta;
-      
-      res = res + integrate(oned_2_integrant_power, lower=low_point, upper= upper_point, x2 = x2, alpha=alpha, beta=beta, m0=m0, m1=m1)$value
-      
-      low_point = upper_point;
+       upper_point = mid_step + i * delta;
+	
+       twod_2 = twod_2 + integrate(Vectorize(oned_2_integral_power), alpha=alpha, beta=beta, m0=m0, m1=m1, lower=low_point, upper=upper_point)$value
+
+       low_point = upper_point;
     }
-    
-    
-    return (res)
-  }
-  
-  twod_2 = integrate(Vectorize(oned_2_integral_power), alpha=alpha, beta=beta, m0=m0, m1=m1, lower=0, upper=mid_step)$value
-  
-  low_point = mid_step; 
-  
-  for(i in 1:N_grid)
-  {
-    upper_point = mid_step + i * delta;
-    
-    twod_2 = twod_2 + integrate(Vectorize(oned_2_integral_power), alpha=alpha, beta=beta, m0=m0, m1=m1, lower=low_point, upper=upper_point)$value
-    
-    low_point = upper_point;
-  }
-  
-  twod_2 = twod_2 * (m0 * alpha)^2  / (1 - (1 - alpha)^m0*(1 - beta)^m1);
-  
-  return (twod_2) 
-  
+
+    twod_2 = twod_2 * m0 * (m0-1) * alpha^2 / (1 - (1 - alpha)^m0*(1 - beta)^m1);
+
+    return (twod_2) 
+
 }
 
 
@@ -258,52 +232,10 @@ second_term_power <- function(alpha, beta, m0, m1, mid_step)
 # this function computes the third term of the three terms
 # in the expression for the variance. It is the square of
 # the pFDR. It is a one-demensional integral
-#
+#third_term_power <- function(alpha, beta, m0, m1, mid_step)
 
-third_term_power <- function(alpha, beta, m0, m1, mid_step)
-{
-  integrant <- function(s, alpha, beta, m0, m1) 
-  {
-    (s * alpha  + 1 - alpha)^(m0 - 1) *
-      (s * beta + 1 - beta)^m1 ;
-  }
-  
-  delta = (1. - mid_step) / N_grid;
-  
-  pFDR_theoretical <- integrate(integrant, lower=0, upper = mid_step, alpha = alpha, beta = beta, m0 = m0, m1 = m1)$value;
-  
-  low_point = mid_step; 
-  
-  for(i in 1:N_grid)
-  {
-    upper_point = mid_step + i * delta;
-    
-    pFDR_theoretical = pFDR_theoretical + integrate(integrant, lower=low_point, upper = upper_point, alpha = alpha, beta = beta, m0 = m0, m1 = m1)$value
-    
-    low_point = upper_point;
-  }
-  
-  
-  pFDR_theoretical <-  pFDR_theoretical * m0 * alpha / (1. - (1. - alpha)^m0 * (1. - beta)^m1 );
-  
-  #
-  #  for the variance, the square is needed
-  #
-  return (pFDR_theoretical^2)
-}
 
-#
-# The function computes the FDP variance in Eq. (12) of the
-#   supporting note in "Exact Integral Formulas for False Discovery Rate
-#   and the Variance of False Discovery Proportion"
-#   alpha, (1- beta) - are the type I and II errros.
-#   m0 and m1 are the numbers of the null and alternative hypotheses
-#
-#
-
-pFDR_Power_variance <- function(alpha, beta, m0, m1)
-{
-  
+get_mid_step <- function(alpha, beta, m0, m1){
   mid_step = 1;
   
   N_crit = m0 + m1;
@@ -321,31 +253,83 @@ pFDR_Power_variance <- function(alpha, beta, m0, m1)
   {
     mid_step = mid_step - 10;
   }
-  
-  temp = first_term_power(alpha, beta, m0, m1, mid_step);
-  
-  # print(c("First part from power ", temp));
-  
-  temp = temp + second_term_power(alpha, beta, m0, m1, mid_step);
-  
-  # print(c("Second part from power ", second_term_power(alpha, beta, m0, m1, mid_step)) );
-  
-  third_term = third_term_power(alpha, beta, m0, m1, mid_step);
-  
-  temp = temp - third_term;
-  
-  # print(c("Third part from power ", third_term ));
-  
-  # print("The FDP, SD(FDP), and var(FDP), from exponential approximation, are: ");
-  
-  # print(c(sqrt(third_term), sqrt(temp), temp));
-  
-  return (temp);
-  
+  return (mid_step);
+}
+
+pFDR_IntegralApproach <- function(alpha, beta, m0, m1, mid_step= -Inf)
+{
+   if (mid_step == -Inf){
+     mid_step = get_mid_step(alpha, beta, m0, m1);
+   }
+   integrant <- function(s, alpha, beta, m0, m1) 
+    {
+         (s * alpha  + 1 - alpha)^(m0 - 1) *
+         (s * beta + 1 - beta)^m1 ;
+    }
+
+    delta = (1. - mid_step) / N_grid;
+
+    pFDR_theoretical <- integrate(integrant, lower=0, upper = mid_step, alpha = alpha, beta = beta, m0 = m0, m1 = m1)$value;
+
+    low_point = mid_step; 
+
+    for(i in 1:N_grid)
+    {
+       upper_point = mid_step + i * delta;
+	
+       pFDR_theoretical = pFDR_theoretical + integrate(integrant, lower=low_point, upper = upper_point, alpha = alpha, beta = beta, m0 = m0, m1 = m1)$value
+
+       low_point = upper_point;
+    }
+
+
+   pFDR_theoretical <-  pFDR_theoretical * m0 * alpha / (1. - (1. - alpha)^m0 * (1. - beta)^m1 );
+
+#
+#  for the variance, the square is needed
+#
+   return (pFDR_theoretical)
+}
+
+
+#
+# The function computes the FDP variance in Eq. (12) of the
+#   supporting note in "Exact Integral Formulas for False Discovery Rate
+#   and the Variance of False Discovery Proportion"
+#   alpha, (1- beta) - are the type I and II errros.
+#   m0 and m1 are the numbers of the null and alternative hypotheses
+#
+#
+
+pFDR_Power_variance <- function(alpha, beta, m0, m1)
+{
+
+   mid_step = get_mid_step(alpha, beta, m0, m1);
+
+   temp = first_term_power(alpha, beta, m0, m1, mid_step);
+
+   # print(c("First part from power ", temp));
+
+   temp = temp + second_term_power(alpha, beta, m0, m1, mid_step);
+
+   # print(c("Second part from power ", second_term_power(alpha, beta, m0, m1, mid_step)) );
+
+   third_term = pFDR_IntegralApproach(alpha, beta, m0, m1, mid_step);
+
+   temp = temp - third_term^2;
+
+   # print(c("Third part from power ", third_term ));
+
+   # print("The FDP, SD(FDP), and var(FDP), from exponential approximation, are: ");
+
+   # print(c((third_term), sqrt(temp), temp));
+   
+   return (temp);
+   
 }
 
 #======================================================================
-#======================================================================
+#====================END FDP variance==================================
 #======================================================================
 
 

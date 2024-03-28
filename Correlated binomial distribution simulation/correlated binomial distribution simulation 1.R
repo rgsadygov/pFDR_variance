@@ -31,40 +31,80 @@
 
 
 
-#calculates the pFDR using the integration approach
-pFDR_IntegralApproach <- function(alpha, beta, m0, m1) {
-  #Calculates the pFDR function at a given value during integration
-  integrant <- function(s, alpha, beta, m0, m1) {
-    result = (s * alpha  + 1 - alpha)^(m0 - 1) * (s * beta + 1 - beta)^m1
-    return(result)
+#=================================================================
+#===================FDP Integral approach=========================
+#=================================================================
+critical_point_1d <- function(alpha, beta, m0, m1, N_crit)
+{  
+  for(i in 1:N_crit)
+  {
+    delta_x = i / N_crit;
+    
+    temp = (delta_x* alpha  + 1 - alpha)^(m0 - 1) *
+      (delta_x * beta + 1 - beta)^m1
+    
+    if(temp > 10^(-7) )
+    {
+      break;
+    }
   }
   
-  #these are the ranges where the integrations are explicited calculated in
-  bounds <- c(0, 0.0001, 0.0005, 0.001, 0.01, 0.025, 0.05, 
-              0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 
-              0.95, 0.96, 0.97, 0.98, 0.985, 0.99, 0.995, 1)
-  pFDR_theoretical = 0 #value of the pFDR_theoretical
+  mid_step = i / N_crit;
   
-  for(i in 2:length(bounds)) { #calculate each range of integration sequential and combine
-    lower = bounds[i-1] #lower bound of integration
-    upper = bounds[i] #upper bound of integration
-    pFDR_theoretical = pFDR_theoretical + integrate(integrant, lower=lower, upper=upper, 
-                                                    alpha=alpha, beta=beta, m0=m0, m1=m1)$value
-  }
-  
-  normalization <- (m0 * alpha) / (1 - (1-alpha)^m0 * (1-beta)^m1)
-  pFDR_theoretical <-  pFDR_theoretical * normalization #apply normalization value   
-  return (pFDR_theoretical);
+  return(mid_step)
 }
 
-
-
+#calculates the pFDR using the integration approach
+pFDR_IntegralApproach <- function(alpha, beta, m0, m1, mid_step= -Inf)
+{
+  N_grid    = 10;
+  mid_step = 1;
+  N_crit = m0 + m1;
+  while (mid_step == 1)
+  {
+    mid_step = critical_point_1d(alpha, beta, m0, m1, N_crit);
+    N_crit = 10 * N_crit;
+  }
+  
+  if(mid_step > 10)
+  {
+    mid_step = mid_step - 10;
+  }
+  
+  integrant <- function(s, alpha, beta, m0, m1) 
+  {
+    (s * alpha  + 1 - alpha)^(m0 - 1) *
+      (s * beta + 1 - beta)^m1 ;
+  }
+  
+  delta = (1. - mid_step) / N_grid;
+  
+  pFDR_theoretical <- integrate(integrant, lower=0, upper = mid_step, alpha = alpha, beta = beta, m0 = m0, m1 = m1)$value;
+  
+  low_point = mid_step; 
+  
+  for(i in 1:N_grid)
+  {
+    upper_point = mid_step + i * delta;
+    
+    pFDR_theoretical = pFDR_theoretical + integrate(integrant, lower=low_point, upper = upper_point, alpha = alpha, beta = beta, m0 = m0, m1 = m1)$value
+    
+    low_point = upper_point;
+  }
+  
+  pFDR_theoretical <-  pFDR_theoretical * m0 * alpha / (1. - (1. - alpha)^m0 * (1. - beta)^m1 );
+  
+  return (pFDR_theoretical)
+}
+ 
+#=================================================================
+#===================END FDP Integral approach=========================
+#=================================================================
 
 
 #
 # The function, compute_fdp) computes the false discovery proportion given, rho(correlation),
-# alpha (significane level of the null), and beta (the power of the test)
-#
+# alpha (significane level of the null), and beta (the power of the test) 
 #
 compute_fdp = function (rho, alpha, beta, n.sim) {
   # Compute p(x=0, y=0) from the correlation value
