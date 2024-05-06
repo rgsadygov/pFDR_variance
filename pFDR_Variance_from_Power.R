@@ -6,7 +6,8 @@
 # type II (1- beta) errors, and the numbers of null (m0)
 # and alternative hypotheses (m1).
 # After sourcing this R code, the function is to be called as:
-# pFDR_Power_variance(alpha, beta, mo, m1) 
+# -> pFDR_IntegralApproach (alpha, beta, m0, m1) # computes pFDR
+# -> pFDR_Power_variance (alpha, beta, m0, m1) # computes the  variance 
 #
 # For example if
 # alpha = 0.03, beta= 0.45, m0 = 909800, m1 = 178900
@@ -17,6 +18,8 @@
 # FDR = 2.5319e-01; standard deviation of FDP = 1.2591e-03
 # variance of FDP = 1.5854e-06
 #
+
+
 
 N_grid    = 10;
 
